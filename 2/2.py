@@ -48,9 +48,9 @@ def checksum(data):
 
 
 
-#print(checksum(parseInput("input2.txt")))
+# second:
 
-list(ft.reduce(lambda x,y: ord(list(y))-ord(list(x)), data))
+data = parseInput("input2.txt"):
 
 ll = list(map(list, data))
 
@@ -66,7 +66,6 @@ for i in range(0, len(ll)):
         crit = len(list(filter(lambda x: x !=0, diff)))
         if crit == 1:
             print(i, j, diff)
-#.            print(diff)
             candidates.append(str(ll[i]))
             candidates.append(str(ll[j]))
 
