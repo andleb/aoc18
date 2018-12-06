@@ -24,14 +24,14 @@ def parseInput(inp):
     return data
 
 
-
-
-
-
 if __name__ == "__main__":
 #    pass
 
 #    dd = pd.Series()
+
+    data = parseInput("input.txt")
+
+
     res = []
 
     for d in data:
