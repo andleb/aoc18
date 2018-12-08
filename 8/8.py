@@ -23,15 +23,25 @@ def parseInput(inp):
 
     return data
 
+if __name__ == "__main__":
 
-def buildTree(data):
+#    data = parseInput("input.txt")
+#    data = data[0].split(" ")
+#    data[-1] = data[-1][:-1]
+
+    data = '2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2'
+    data = data.split(" ")
+
+    data = list(map(int,data))
+
+#def buildTree(data):
 
     tree = {}
     i = 0
     node = 0
     parent = None
 
-    while i < len(data):
+    while i < len(data)-1:
 
         nChild = data[i]
         nMd = data[i+1]
@@ -40,10 +50,13 @@ def buildTree(data):
         if parent is not None:
             tree[parent][3].append(node)
 
-        parent = node
+        if nChild:
+            parent = node
 
         node += 1
         i += 2
+        if i >= len(data) - 2:
+            break
 
         nChild = data[i]
         nMd = data[i+1]
@@ -51,25 +64,33 @@ def buildTree(data):
 
         tree[parent][3].append(node)
 
+        i += 2
+
         if nChild:
+            parent = node
             node += 1
-            i += nMd + 2
         else:
-            tree[node][1].extend(data[i+2:i+2+nMd])
+            tree[node][1].extend(data[i:i+nMd])
 #            print(tree[node])
 
-            i += 2 + nMd
+            i += nMd
 
-            #last child, add metadata
-            while (tree[parent][0][1] == len(tree[parent][3])\
-                and tree[parent][3][-1] == node):
+            oldNode = node
+
+            #last child, recursively add metadata
+            while (tree[parent][0][0] == len(tree[parent][3])\
+                and node in tree[parent][3]):
+#                and tree[parent][3][-1] == node):
 
                 node = parent
                 nMd = tree[node][0][1]
+
                 tree[node][1].extend(data[i:i+nMd])
 
                 i += nMd
                 parent = tree[node][2]
+                print(parent)
+                print("")
 
                 # root
                 if tree[parent][2] is None:
@@ -77,28 +98,24 @@ def buildTree(data):
                     tree[parent][1].extend(data[i:i+nMd])
                     i += nMd
                     break
-            else:
-                node += 1
 
-    return tree
+            node = oldNode + 1
 
-if __name__ == "__main__":
+#    return tree, i
 
-    data = parseInput("input.txt")
-    data = data[0].split(" ")
-    data[-1] = data[-1][:-1]
 
-#    data = '2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2'
-#    data = data.split(" ")
-
-    data = list(map(int,data))
-
-    tree = buildTree(data)
+#    tree, i = buildTree(data)
 #    print(tree)
+
+
+    for k,v in tree.items():
+        if v[0][1] != len(v[1]):
+            print("error", k, v)
+        break
 
     mdsum = 0
     for k,v in tree.items():
-        print(k, v)
+#        print(k, v)
         mdsum += sum(v[1])
 
     print(mdsum)
