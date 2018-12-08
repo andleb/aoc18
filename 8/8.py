@@ -25,12 +25,12 @@ def parseInput(inp):
 
 if __name__ == "__main__":
 
-#    data = parseInput("input.txt")
-#    data = data[0].split(" ")
-#    data[-1] = data[-1][:-1]
+    data = parseInput("input.txt")
+    data = data[0].split(" ")
+    data[-1] = data[-1][:-1]
 
-    data = '2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2'
-    data = data.split(" ")
+#    data = '2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2'
+#    data = data.split(" ")
 
     data = list(map(int,data))
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     node = 0
     parent = None
 
-    while i < len(data)-1:
+    while i < len(data):
 
         nChild = data[i]
         nMd = data[i+1]
@@ -50,58 +50,58 @@ if __name__ == "__main__":
         if parent is not None:
             tree[parent][3].append(node)
 
-        if nChild:
-            parent = node
-
-        node += 1
-        i += 2
-        if i >= len(data) - 2:
-            break
-
-        nChild = data[i]
-        nMd = data[i+1]
-        tree[node] = [(nChild, nMd), [], parent, []]
-
-        tree[parent][3].append(node)
-
         i += 2
 
         if nChild:
             parent = node
             node += 1
-        else:
-            tree[node][1].extend(data[i:i+nMd])
-#            print(tree[node])
+            continue
 
+        oldNode = node
+        while nChild  == len(tree[node][3]):
+
+            nMd = tree[node][0][1]
+            parent = tree[node][2]
+
+            tree[node][1].extend(data[i:i+nMd])
             i += nMd
 
-            oldNode = node
+            node = parent
+            if node is None:
+                break
+            nChild = tree[node][0][0]
 
-            #last child, recursively add metadata
-            while (tree[parent][0][0] == len(tree[parent][3])\
-                and node in tree[parent][3]):
-#                and tree[parent][3][-1] == node):
+        node = oldNode + 1
+#
+#
+#
+#        oldNode = node
+#
+#        #last child, recursively add metadata
+#        while (tree[parent][0][0] == len(tree[parent][3])\
+#            and node in tree[parent][3]):
+##                and tree[parent][3][-1] == node):
+#
+#            node = parent
+#            nMd = tree[node][0][1]
+#
+#            tree[node][1].extend(data[i:i+nMd])
+#
+#            i += nMd
+#            parent = tree[node][2]
+#            print(parent)
+#            print("")
+#
+#            # root
+#            if tree[parent][2] is None:
+#                nMd = tree[parent][0][1]
+#                tree[parent][1].extend(data[i:i+nMd])
+#                i += nMd
+#                break
+#
+#        node = oldNode + 1
 
-                node = parent
-                nMd = tree[node][0][1]
-
-                tree[node][1].extend(data[i:i+nMd])
-
-                i += nMd
-                parent = tree[node][2]
-                print(parent)
-                print("")
-
-                # root
-                if tree[parent][2] is None:
-                    nMd = tree[parent][0][1]
-                    tree[parent][1].extend(data[i:i+nMd])
-                    i += nMd
-                    break
-
-            node = oldNode + 1
-
-#    return tree, i
+#    return tree
 
 
 #    tree, i = buildTree(data)
