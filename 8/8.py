@@ -23,6 +23,22 @@ def parseInput(inp):
 
     return data
 
+
+tot = 0
+
+def value(node):
+    global tot
+
+    if not len(tree[node][3]):
+        tot += sum(tree[node][1])
+    else:
+        for mdInd in tree[node][1]:
+            try:
+                child = tree[node][3][mdInd-1]
+                value(child)
+            except IndexError:
+                pass
+
 if __name__ == "__main__":
 
     data = parseInput("input.txt")
@@ -118,7 +134,14 @@ if __name__ == "__main__":
 #        print(k, v)
         mdsum += sum(v[1])
 
-    print(mdsum)
+#    print(mdsum)
+
+#    node = 0
+#    tot = 0
+
+    value(0)
+    print(tot)
+
 
 
 
