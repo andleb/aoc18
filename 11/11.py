@@ -56,8 +56,9 @@ def powerLevel(x, y, serial):
 if __name__ == "__main__":
 
 #    data = parseInput("input.txt")
-    serial = 6303
 #    serial = 18
+#    serial = 42
+    serial = 6303
 
 #    print(serial)
 
@@ -65,7 +66,7 @@ if __name__ == "__main__":
 
     for y in range(plmat.shape[0]):
         for x in range(plmat.shape[1]):
-            plmat[y][x] = powerLevel(x, y, serial)
+            plmat[y][x] = powerLevel(x+1, y+1, serial)
 
     # brute force
     plsummat = np.zeros((300,300))
@@ -84,6 +85,59 @@ if __name__ == "__main__":
 
 
 
+    #part2
+
+    known  = {}
+
+    for siz in range(1,300):
+        plsummat = np.zeros((300,300))
+
+        if not siz % 3:
+            prev = known[siz//3][3]
+
+            for y in range(0, plsummat.shape[0] - siz + 1):
+                for x in range(0, plsummat.shape[1] - siz + 1):
+
+                    plsummat[y][x] = prev[y][x] + prev[y][x+1] +prev[y][x+2]\
+                        + prev[y+1][x] + prev[y+1][x+1] + prev[y+1][x+2]\
+                        + prev[y+2][x] + prev[y+2][x+1] + prev[y+2][x+2]
+
+            maxy, maxx=  np.unravel_index(plsummat.argmax(), plsummat.shape)
+            known[siz] = (maxx, maxy, plsummat[maxy][maxx], plsummat)
+
+        elif not siz % 2:
+            prev = known[siz//2][3]
+
+            for y in range(0, plsummat.shape[0] - siz + 1 ):
+                for x in range(0, plsummat.shape[1] - siz + 1):
+
+                    plsummat[y][x] = prev[y][x] + prev[y+1][x] +prev[y][x+1]\
+                        + prev[y+1][x+1]
+
+            maxy, maxx=  np.unravel_index(plsummat.argmax(), plsummat.shape)
+            known[siz] = (maxx, maxy, plsummat[maxy][maxx], plsummat)
+        else:
+
+            for y in range(0, plsummat.shape[0] - siz + 1):
+                for x in range(0, plsummat.shape[1] - siz + 1):
+
+                    for i in range(0, siz):
+                        for j in range(0, siz):
+                            plsummat[y][x] += plmat[y+i][x+j]
+
+            maxy, maxx=  np.unravel_index(plsummat.argmax(), plsummat.shape)
+            known[siz] = (maxx, maxy, plsummat[maxy][maxx], plsummat)
+
+        print(siz, maxx, maxy, plsummat[maxy][maxx])
+
+
+    maxsiz = 0
+    maxp = -1
+    for k, v in known.items():
+        print(k, v[:3])
+        if v[2] >= maxp:
+            maxp = v[2]
+            maxsix = k
 
 
 
