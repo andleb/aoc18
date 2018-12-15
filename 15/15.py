@@ -268,7 +268,7 @@ def solve1(data):
 
     return n, sumhp, sumhp*n, elves, goblins
 
-def solve(data, attackE=3, attackG=3):
+def solve2(data, attackE, attackG=3):
 
     graph, goblins, elves = buildGraph(data)
 #    D, P = Dijkstra(graph,(1,1))
@@ -279,15 +279,12 @@ def solve(data, attackE=3, attackG=3):
 
         graphNoC, goblins, elves = updateInvariants(graph, goblins, elves, node=None)
 
-        print("\n", n)
-        res = printMaze(graph, goblins, elves)
-        print(goblins)
-        print(elves)
-
         ordering = coll.deque(sorted(goblins + elves, key=lambda x: x[0]))
 
+#        for c in ordering:
         while len(ordering):
-
+#            if c not in (sorted(goblins + elves, key=lambda x: x[0])):
+#                continue
             if not len(goblins) or not len(elves):
                 print("exiting early")
                 break
@@ -301,13 +298,6 @@ def solve(data, attackE=3, attackG=3):
 
             #goblin elf switch
             gob = c[0] in [g[0] for g in goblins]
-#
-#            if gob:
-#                friends = goblins
-#                enemies = elves
-#            else:
-#                friends = elves
-#                enemies = goblins
 
 #            for e in enemies:
             for e in (elves if gob else goblins):
@@ -394,18 +384,10 @@ def solve(data, attackE=3, attackG=3):
                 else:
                     (elves if gob else goblins)[indT] = (target[0], newHP)
 
-            #update loop invariant
-#            ordering = sorted(goblins + elves, key=lambda x: x[0])
-
-#        goblins = sorted(goblins, key=lambda x: x[0])
-#        elves = sorted(elves, key=lambda x: x[0])
 
         lg = len(goblins)
         le = len(elves)
 
-#        print(n, i, len(initOrdering))
-        # what qualifies for a full round - all creatures have taken their turn
-#        if (i == len(initOrdering) - 1) or (lg and le):
         if (lg and le) or not len(ordering):
             n += 1
 
@@ -418,8 +400,6 @@ def solve(data, attackE=3, attackG=3):
 
     sumhp = sum([g[1] for g in (goblins if len(goblins) else elves)])
     return (attackE, n, sumhp, sumhp*n, elves, goblins)
-
-
 
 
 
@@ -485,7 +465,6 @@ if __name__ == "__main__":
 #'#...E.#',
 #'#######']
 
-#BUG
 #    data = \
 #['#######',
 #'#.E...#',

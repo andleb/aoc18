@@ -49,12 +49,12 @@ if __name__ == "__main__":
     after = 100000
     found = False
 #    while len(scoreboard) < after+10:
-#    compare = coll.deque([3,2,0,8,5,1])
+    compare = coll.deque([3,2,0,8,5,1])
 
 #    compare = coll.deque([5,1,5,8,9])
 #    compare = coll.deque([0,1,2,4,5])
 #    compare = coll.deque([9,2,5,1,0])
-    compare = coll.deque([5,9,4,1,4])
+#    compare = coll.deque([5,9,4,1,4])
     lenS = len(compare)
     prev = lenS
     tally = coll.deque(scoreboard)
