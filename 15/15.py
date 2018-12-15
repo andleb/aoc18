@@ -211,10 +211,13 @@ if __name__ == "__main__":
                     path = path[::-1]
 
                     #take step
-                    newnode = path[1]
+                    indF = [f[0] for f in friends].index(node)
+                    node = path[1]
+                    hp = friends[indF][1]
                     # i for elves compensation
 #                    friends[ngoblins if gob else nelves] = (node, c[1])
-                    friends[[f[0] for f in friends].index(node)] = (newnode, c[1])
+                    friends[indF] = (node, hp)
+
 
                     # modify graph by removing the combatants
                     #TODO: do this above and just add/remove edges after each move
@@ -225,6 +228,20 @@ if __name__ == "__main__":
                                 del edg[el[0]]
                             except KeyError:
                                 continue
+
+                    goblins = sorted(goblins, key=lambda x: x[0])
+                    elves = sorted(elves, key=lambda x: x[0])
+
+                    #update range_targets !
+                    # check for new_node below instead
+                    range_targets = []
+                    for e in enemies:
+                        range_targets.extend([t for t in graphNoC[e[0]].keys()])
+
+                    adjacentEn = [neigh for neigh in graph[node] if neigh in\
+                          [t[0] for t in enemies]]
+                    if len(adjacentEn):
+                        range_targets.append(node)
 
             #Attack
             if node in range_targets:
@@ -240,14 +257,18 @@ if __name__ == "__main__":
                     enemies.pop(indT)
                 else:
                     enemies[indT] = (enemies[indT][0], newHP)
+                if gob:
+                    elves = enemies
+                else:
+                    gob = enemies
 
             if gob:
                 ngoblins += 1
             else:
               nelves += 1
 
-        if len(goblins) and len(elves):
-            n += 1
+#        if len(goblins) and len(elves):
+        n += 1
 
     print("\n", n)
     res = printMaze(graph, goblins, elves)
