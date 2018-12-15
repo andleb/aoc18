@@ -75,6 +75,7 @@ def Dijkstra(G,start,end=None):
 
 
 def printMaze(graph, goblins, elves):
+    #FIXME: bug in buildgraph
     res = np.chararray((max(graph, key=lambda t:t[0])[0]+2,
                         max(graph, key=lambda t:t[1])[1]+2), itemsize=1, unicode=True)
     res[:] = '#'
@@ -115,92 +116,7 @@ def updateInvariants(graph, goblins, elves, node=None):
 
     return graphNoC, goblins, elves
 
-
-
-if __name__ == "__main__":
-
-#    data = parseInput("input.txt")
-
-#    data = ['#######',
-#'#.G.E.#',
-#'#E.G.E#',
-#'#.G.E.#',
-#'#######']
-
-#    data = ['#########',
-#'#G..G..G#',
-#'#.......#',
-#'#.......#',
-#'#G..E..G#',
-#'#.......#',
-#'#.......#',
-#'#G..G..G#',
-#'#########']
-
-### first
-
-#OK
-    data = ['#######',
-'#.G...#',
-'#...EG#',
-'#.#.#G#',
-'#..G#E#',
-'#.....#',
-'#######']
-
-### extra debug
-
-#OK
-#    data = ['#######',
-#'#G..#E#',
-#'#E#E.E#',
-#'#G.##.#',
-#'#...#E#',
-#'#...E.#',
-#'#######']
-
-#OK
-#    data =\
-#['#######',
-#'#E..EG#',
-#'#.#G.E#',
-#'#E.##E#',
-#'#G..#.#',
-#'#..E#.#',
-#'#######']
-
-#OK
-#    data = \
-#['#######',
-#'#E.G#.#',
-#'#.#G..#',
-#'#G.#.G#',
-#'#G..#.#',
-#'#...E.#',
-#'#######']
-
-#OK
-#    data = \
-#['#######',
-#'#.E...#',
-#'#.#..G#',
-#'#.###.#',
-#'#E#G#G#',
-#'#...#G#',
-#'#######']
-
-#OK
-#    data = \
-#['#########',
-#'#G......#',
-#'#.E.#...#',
-#'#..##..G#',
-#'#...##..#',
-#'#...#...#',
-#'#.G...G.#',
-#'#.....G.#',
-#'#########']
-
+def solve1(data):
     attackP = 3
 
     graph, goblins, elves = buildGraph(data)
@@ -212,10 +128,10 @@ if __name__ == "__main__":
 
         graphNoC, goblins, elves = updateInvariants(graph, goblins, elves, node=None)
 
-        print("\n", n)
-        res = printMaze(graph, goblins, elves)
-        print(goblins)
-        print(elves)
+#        print("\n", n)
+#        res = printMaze(graph, goblins, elves)
+#        print(goblins)
+#        print(elves)
 
 #        initOrdering = sorted(goblins + elves, key=lambda x: x[0])
 #        for i, c in enumerate(initOrdering):
@@ -337,13 +253,273 @@ if __name__ == "__main__":
 #        print(n, i, len(initOrdering))
         # what qualifies for a full round - all creatures have taken their turn
 #        if (i == len(initOrdering) - 1) or (lg and le):
-        if (lg and le):
+        if (lg and le) or not len(ordering):
             n += 1
 
+
+
     print("\n", n)
-    res = printMaze(graph, goblins, elves)
+    printMaze(graph, goblins, elves)
     print(goblins)
     print(elves)
 
     sumhp = sum([g[1] for g in (goblins if len(goblins) else elves)])
     print(n, sumhp, sumhp*n)
+
+    return n, sumhp, sumhp*n, elves, goblins
+
+def solve(data, attackE=3, attackG=3):
+
+    graph, goblins, elves = buildGraph(data)
+#    D, P = Dijkstra(graph,(1,1))
+
+    n = 0
+
+    while len(goblins) and len(elves):
+
+        graphNoC, goblins, elves = updateInvariants(graph, goblins, elves, node=None)
+
+        print("\n", n)
+        res = printMaze(graph, goblins, elves)
+        print(goblins)
+        print(elves)
+
+        ordering = coll.deque(sorted(goblins + elves, key=lambda x: x[0]))
+
+        while len(ordering):
+
+            if not len(goblins) or not len(elves):
+                print("exiting early")
+                break
+
+            c = ordering.popleft()
+            node = c[0]
+            dist, pred = Dijkstra(graphNoC, node)
+            del dist[node]
+
+            range_targets = []
+
+            #goblin elf switch
+            gob = c[0] in [g[0] for g in goblins]
+#
+#            if gob:
+#                friends = goblins
+#                enemies = elves
+#            else:
+#                friends = elves
+#                enemies = goblins
+
+#            for e in enemies:
+            for e in (elves if gob else goblins):
+                range_targets.extend([t for t in graphNoC[e[0]].keys()])
+
+            # are we already next to an enemy?
+            adjacentEn = [neigh for neigh in graph[node] if neigh in\
+                          [t[0] for t in (elves if gob else goblins)]]
+            if len(adjacentEn):
+                range_targets.append(node)
+
+            if node not in range_targets:
+                #Move
+                # min orders the results in tiebreak
+                dist_range_targets = {k: v for k,v in dist.items() if k in range_targets}
+
+                # move if possible
+                if len(dist_range_targets):
+                        #tiebreak reading order
+                    targetnode = min(dist_range_targets.items(),
+                                     key=lambda t: (t[1], t[0]))[0]
+
+                    path = [targetnode]
+                    prednode = pred[targetnode]
+                    while prednode != node:
+                        path.append(prednode)
+                        prednode = pred[prednode]
+                    path.append(node)
+                    path = path[::-1]
+
+                    # take step
+#                    indF = [f[0] for f in friends].index(node)
+                    indF = [f[0] for f in (goblins if gob else elves)].index(node)
+                    node = path[1]
+                    hp = (goblins if gob else elves)[indF][1]
+
+                    #NOTE: move, update data here
+                    (goblins if gob else elves)[indF] = (node, hp)
+
+                    graphNoC, goblins, elves = updateInvariants(graph, goblins, elves)
+
+                    #update range_targets !
+                    # check for new_node below instead
+                    range_targets = []
+                    for e in (elves if gob else goblins):
+                        range_targets.extend([t for t in graphNoC[e[0]].keys()])
+
+                    adjacentEn = [neigh for neigh in graph[node] if neigh in\
+                          [t[0] for t in (elves if gob else goblins)]]
+                    if len(adjacentEn):
+                        range_targets.append(node)
+
+            #Attack
+            if node in range_targets:
+                                                        #NOTE: consider combatants as well here
+                targets = sorted([enemy for enemy in (elves if gob else goblins)\
+                                  if enemy[0] in graph[node]],
+                       key=lambda enemy: (enemy[1], enemy[0]))
+                target = targets[0]
+
+                #attack the target
+                attack = attackG if gob else attackE
+
+                indT = (elves if gob else goblins).index(target)
+                newHP =  (elves if gob else goblins)[indT][1] - attack
+                if newHP <= 0:
+                    if gob:
+                        print("elf died")
+                        return -1
+                    else:
+                        #NOTE: remove, update data here
+                        goblins.pop(indT)
+
+                    try:
+                        ordering.remove(target)
+                    except ValueError:
+                        pass
+
+                    if not len((elves if gob else goblins)):
+                        print("exiting early")
+                        break
+                    else:
+                        graphNoC, goblins, elves = updateInvariants(graph, goblins, elves)
+                else:
+                    (elves if gob else goblins)[indT] = (target[0], newHP)
+
+            #update loop invariant
+#            ordering = sorted(goblins + elves, key=lambda x: x[0])
+
+#        goblins = sorted(goblins, key=lambda x: x[0])
+#        elves = sorted(elves, key=lambda x: x[0])
+
+        lg = len(goblins)
+        le = len(elves)
+
+#        print(n, i, len(initOrdering))
+        # what qualifies for a full round - all creatures have taken their turn
+#        if (i == len(initOrdering) - 1) or (lg and le):
+        if (lg and le) or not len(ordering):
+            n += 1
+
+
+
+    print("\n", n)
+    printMaze(graph, goblins, elves)
+    print(goblins)
+    print(elves)
+
+    sumhp = sum([g[1] for g in (goblins if len(goblins) else elves)])
+    return (attackE, n, sumhp, sumhp*n, elves, goblins)
+
+
+
+
+
+if __name__ == "__main__":
+
+    data = parseInput("input.txt")
+
+#    data = ['#######',
+#'#.G.E.#',
+#'#E.G.E#',
+#'#.G.E.#',
+#'#######']
+
+#    data = ['#########',
+#'#G..G..G#',
+#'#.......#',
+#'#.......#',
+#'#G..E..G#',
+#'#.......#',
+#'#.......#',
+#'#G..G..G#',
+#'#########']
+
+### first
+
+#OK
+#    data = ['#######',
+#'#.G...#',
+#'#...EG#',
+#'#.#.#G#',
+#'#..G#E#',
+#'#.....#',
+#'#######']
+
+### extra debug
+
+#OK
+#    data = ['#######',
+#'#G..#E#',
+#'#E#E.E#',
+#'#G.##.#',
+#'#...#E#',
+#'#...E.#',
+#'#######']
+
+#OK
+#    data =\
+#['#######',
+#'#E..EG#',
+#'#.#G.E#',
+#'#E.##E#',
+#'#G..#.#',
+#'#..E#.#',
+#'#######']
+
+#OK
+#    data = \
+#['#######',
+#'#E.G#.#',
+#'#.#G..#',
+#'#G.#.G#',
+#'#G..#.#',
+#'#...E.#',
+#'#######']
+
+#BUG
+#    data = \
+#['#######',
+#'#.E...#',
+#'#.#..G#',
+#'#.###.#',
+#'#E#G#G#',
+#'#...#G#',
+#'#######']
+
+#OK
+#    data = \
+#['#########',
+#'#G......#',
+#'#.E.#...#',
+#'#..##..G#',
+#'#...##..#',
+#'#...#...#',
+#'#.G...G.#',
+#'#.....G.#',
+#'#########']
+
+#    graph, goblins, elves = buildGraph(data)
+#    res = printMaze(graph, goblins, elves)
+
+#    n, sumhp, sumhpn, elves, goblins = solve1(data)
+
+    for attackE in range(4,1000):
+        print(attackE)
+        ret = solve2(data, attackE)
+        if ret != -1:
+            if len(ret[-2]) > len(ret[-1]):
+#                print(ret)
+                print(attackE)
+                break
+
+
+
