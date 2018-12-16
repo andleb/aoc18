@@ -51,6 +51,15 @@ def getSamples(data):
 
     return samples
 
+def getProgram(data):
+    program = []
+
+    for line in data:
+        op, a, b, c = re.search('(\d+)\s*(\d+)\s*(\d+)\s*(\d+)\s*', line).groups()
+        program.append(tuple(map(int, (op,a,b,c))))
+
+    return program
+
 def addr(inp, inst):
     op, a, b, c = inst
     outp = list(inp)
@@ -190,4 +199,61 @@ if __name__ == "__main__":
 
 #    print(nThree)
     print(len(nThree))
+
+
+# 2nd
+    opdic = {}
+
+    possib = []
+
+    for s in samp:
+        matches = []
+        inp, inst, outp = s
+
+        for opcode, op in ops.items():
+#            print(opcode, inp, inst, outp, op(inp, inst), outp == op(inp, inst))
+            if outp == op(inp, inst):
+                matches.append(opcode)
+
+        possib.append((s, matches))
+
+
+    # no match
+    assert len([p for p in possib if len(p[1]) == 0]) == 0
+
+    # matching algo
+    sample = possib.copy()
+
+    n = 0
+    while len(sample):
+        # 1 match
+        inst = [s for s in sample if len(s[1]) == 1]
+        for p in inst:
+            opdic[p[0][1][0]] = p[1][0]
+
+        #remove known codes
+        sample = [s for s in sample if s[0][1][0] not in opdic.keys()]
+
+        #remove possibilites
+        for s in sample:
+            for op in opdic.values():
+                try:
+                    s[1].remove(op)
+                except ValueError:
+                    pass
+
+        n += 1
+
+    program = getProgram(parseInput("program.txt"))
+    registers = (0,0,0,0)
+    for line in program:
+        op, a, b, c = line
+        registers = ops[opdic[op]](registers, line)
+
+    print(registers)
+
+
+
+
+
 
