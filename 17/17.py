@@ -180,44 +180,69 @@ def discoverNeigh(graph, clay, rest, node, sizY):
                     graph[node][neigh] = 1
 
 
+def visitBFS(graph, clay, rest, visited, queue, sizY):
+
+    while len(queue):
+        node = queue.popleft()
+        discoverNeigh(graph, clay, rest, node, sizY)
+
+        edges = graph[node].copy()
+        candidates = [edg for edg in edges]
+        candidates = sorted(candidates, key=lambda x:(x[0],-x[1]), reverse=True)
+        #always down
+        if len(candidates) and candidates[0][0] > node[0]:
+            candidates = candidates[:1]
+
+        for child in candidates:
+            if child in visited:
+                candidates.remove(child)
+
+        queue.clear()
+        queue.extend(candidates)
+
+        visited.add(node)
+
+    return node
+
 if __name__ == "__main__":
 
     pass
 
-#    try:
-#        data = pickle.load(open('data', 'rb'))
-#    except:
-#       data = parseInput("input.txt")
-#        pickle.dump(data, open('data', 'wb'))
+##    try:
+##        data = pickle.load(open('data', 'rb'))
+##    except:
+##       data = parseInput("input.txt")
+##        pickle.dump(data, open('data', 'wb'))
+#
+#    data = parseInput("input.txt")
 
-#   data = parseInput("input.txt")
-#    clay, sizY, sizX = parseInputClay("input.txt")
-#    sourceO = (0, 500)
+    clay, sizY, sizX = parseInputClay("input.txt")
+    sourceO = (0, 500)
 
-    data = ['......+.......',
-'............#.',
-'.#..#.......#.',
-'.#..#..#......',
-'.#..#..#......',
-'.#.....#......',
-'.#.....#......',
-'.#######......',
-'..............',
-'..............',
-'....#.....#...',
-'....#.....#...',
-'....#.....#...',
-'....#######...']
-
-    clay = set()
-    for i, line in enumerate(data):
-        for j, c in enumerate(line):
-            if c == "#":
-                clay.add((i,j))
-
-    sizY = max(clay, key=lambda t: t[0])[0]
-    sizX = max(clay, key=lambda t: t[1])[1]
-    sourceO = (0, (sizX) // 2)
+#    data = ['......+.......',
+#'............#.',
+#'.#..#.......#.',
+#'.#..#..#......',
+#'.#..#..#......',
+#'.#.....#......',
+#'.#.....#......',
+#'.#######......',
+#'..............',
+#'..............',
+#'....#.....#...',
+#'....#.....#...',
+#'....#.....#...',
+#'....#######...']
+#
+#    clay = set()
+#    for i, line in enumerate(data):
+#        for j, c in enumerate(line):
+#            if c == "#":
+#                clay.add((i,j))
+#
+#    sizY = max(clay, key=lambda t: t[0])[0]
+#    sizX = max(clay, key=lambda t: t[1])[1]
+#    sourceO = (0, (sizX) // 2)
 
 
     graph = {}
@@ -226,165 +251,145 @@ if __name__ == "__main__":
     visitedPrev = set()
 
     sources = coll.deque([sourceO])
+    seenSources = set([sourceO])
                         #NOTE: placeholder for origin source
     prevRest = coll.deque([None])
 
     #build graph as you go
     discoverNeigh(graph, clay, rest, sources[-1], sizY)
+#    #remove left/right at the source
+#    graph[sourceO] = {(sourceO[0]+1, sourceO[1]): 1}
 
     n = 0
-    while n < 40:
+    while n < 50 and len(sources):
+        print('\n')
+        print(n, len(visitedPrev), len(visited), len(rest))
+        res = printGraph(graph, clay, sources[-1], visited, rest)
+        print('\n')
+
+
         queue = coll.deque([sources[-1]])
         visited = visitedPrev.copy()
 
-        while len(queue):
-
-            node = queue.popleft()
-            discoverNeigh(graph, clay, rest, node, sizY)
-
-#            print(node, queue, visited)
-
-            edges = graph[node].copy()
-            candidates = [edg for edg in edges]
-            candidates = sorted(candidates, key=lambda x:(x[0],-x[1]), reverse=True)
-            #always down
-            if len(candidates) and candidates[0][0] > node[0]:
-                candidates = candidates[:1]
-
-            for child in candidates:
-                if child in visited:
-                    candidates.remove(child)
-
-            queue.clear()
-            queue.extend(candidates)
-
-            visited.add(node)
+        node = visitBFS(graph, clay, rest, visited, queue, sizY)
 
         # rest - came to stop not at boundary
         if node[0] not in [0, sizY] and node[1] not in [0, sizX]:
-
-            # start another bfs to see if a lower node can be found
-
+        # start another bfs to see if a lower node can be found
 #            print("rest candidate", node)
-
-            queueR = coll.deque([node])
             visitedR = set()
 
-            found = False
-
-            while len(queueR):
-                nodeR = queueR.popleft()
-                discoverNeigh(graph, clay, rest, nodeR, sizY)
-
-                edgesR = graph[nodeR].copy()
-                candidatesR = [edg for edg in edgesR]
-                candidatesR = sorted(candidatesR, key=lambda x:(x[0],-x[1]), reverse=True)
-                #always down
-                if len(candidatesR) and candidatesR[0][0] > nodeR[0]:
-                    candidatesR = candidatesR[:1]
-
-                for childR in candidatesR:
-                    if childR in visitedR:
-                        candidatesR.remove(childR)
-
-                if len(candidatesR) and candidatesR[0][0] > node[0]:
-                    found = True
-                    visitedR.add(nodeR)
-                    break
-
-#                queueR = coll.deque(candidatesR)
-                queueR.clear()
-                queueR.extend(candidatesR)
-                visitedR.add(nodeR)
-
+            #TODO: break early
+            queue = coll.deque([node])
+            nodeR = visitBFS(graph, clay, rest, visitedR, queue, sizY)
 #            res = printGraph(graph, clay, nodeR, visitedR, rest)
 
-            if not found:
+            if nodeR[0] == node[0]:
 #                print("rest:", node)
-                rest.add(node)
-                prevRest.append(node)
+                visitedR.add(node)
+                rest |= visitedR
+                prevRest.extend(visitedR)
 
                 # rest nodes are invisible in the graph
                 for nd, ed in graph.items():
+                    for restNode in visitedR:
+                        try:
+                            del ed[restNode]
+                        except KeyError:
+                            continue
+
+                for restNode in visitedR:
                     try:
-                        del ed[node]
+                        del graph[node]
                     except KeyError:
-                        continue
+                            continue
 
-                del graph[node]
-
-            # filled reservoir water can be taken to start flowing from here
+            # filled reservoir: water can be taken to start flowing from here
             else:
-                sources.append(node)
+                if node not in seenSources:
+                    sources.append(node)
+                    seenSources.add(node)
+                else:
+                    sources.pop()
 #                sources.append((prevRest[-1][0]-1, prevRest[-1][1]))
                 visitedPrev |= set([v for v in visited if v[0] < node[0]])
 #                print(source, visitedPrev)
 
         # reached the boundary - set new source, try all paths
-        #FIXME:
         else:
             # new source- last visited next to rest and with somewhere to go
             # prevvisited - visited + current source
 
-            sources.append((prevRest[-1][0]-1, prevRest[-1][1]))
-            discoverNeigh(graph, clay, rest, sources[-1], sizY)
+            visitedPrev |= visited
 
-            while len(sources) > 1:
-                visitedPrev |= visited
-                visitedPrev.add(sources[-1])
+            newSource = (prevRest[-1][0]-1, prevRest[-1][1])
+            if newSource not in seenSources:
+                sources.append(newSource)
+                seenSources.add(newSource)
+                discoverNeigh(graph, clay, rest, sources[-1], sizY)
 
-#                sources.append = (prevRest[0]-1, prevRest[1])
-                source = sources.pop()
-
-                paths = sorted([n for n in graph[source] if n not in visitedPrev],
-                               key=lambda x:(x[0],-x[1]), reverse=True)
-
-                if len(paths) and paths[0][0] > source[0]:
-                            paths = paths[:1]
-
-                while len(paths):
-                    queueEnd = coll.deque([source])
-                    visitedEnd = visitedPrev
-
-                    while len(queueEnd):
-                        nodeEnd = queueEnd.popleft()
-                        discoverNeigh(graph, clay, rest, nodeEnd, sizY)
-
-                        candidatesEnd = graph[nodeEnd].copy()
-                        candidatesEnd = sorted(candidatesEnd, key=lambda x:(x[0],-x[1]), reverse=True)
-                        #always down
-                        if len(candidatesEnd) and candidatesEnd[0][0] > nodeEnd[0]:
-                            candidatesEnd = candidatesEnd[:1]
-
-                        for childEnd in candidatesEnd:
-                            if childEnd in visitedEnd:
-                                candidatesEnd.remove(childEnd)
-
-                        queueEnd.clear()
-                        queueEnd.extend(candidatesEnd)
-                        visitedEnd.add(nodeEnd)
-
-                    visitedPrev |= visitedEnd
-                    paths = sorted([n for n in graph[source] if n not in visitedPrev],
-                                   key=lambda x:(x[0],-x[1]), reverse=True)
+            #all paths exhausted?
+            if set(graph[sources[-1]].keys()).issubset(visitedPrev)\
+                or len(sources) == 1:
+                sources.pop()
 
 
-                visited |= visitedPrev
-                print('\n')
-                res = printGraph(graph, clay, source, visited, rest)
-                print('\n')
 
-            break
+
+#            while len(sources) > 1:
+#                visitedPrev |= visited
+#                visitedPrev.add(sources[-1])
+#
+##                sources.append = (prevRest[0]-1, prevRest[1])
+#                source = sources.pop()
+#
+#                paths = sorted([n for n in graph[source] if n not in visitedPrev],
+#                               key=lambda x:(x[0],-x[1]), reverse=True)
+#
+#                if len(paths) and paths[0][0] > source[0]:
+#                            paths = paths[:1]
+#
+#                while len(paths):
+#                    queueEnd = coll.deque([source])
+#                    visitedEnd = visitedPrev
+#
+#                    while len(queueEnd):
+#                        nodeEnd = queueEnd.popleft()
+#                        discoverNeigh(graph, clay, rest, nodeEnd, sizY)
+#
+#                        candidatesEnd = graph[nodeEnd].copy()
+#                        candidatesEnd = sorted(candidatesEnd, key=lambda x:(x[0],-x[1]), reverse=True)
+#                        #always down
+#                        if len(candidatesEnd) and candidatesEnd[0][0] > nodeEnd[0]:
+#                            candidatesEnd = candidatesEnd[:1]
+#
+#                        for childEnd in candidatesEnd:
+#                            if childEnd in visitedEnd:
+#                                candidatesEnd.remove(childEnd)
+#
+#                        queueEnd.clear()
+#                        queueEnd.extend(candidatesEnd)
+#                        visitedEnd.add(nodeEnd)
+#
+#                    visitedPrev |= visitedEnd
+#                    paths = sorted([n for n in graph[source] if n not in visitedPrev],
+#                                   key=lambda x:(x[0],-x[1]), reverse=True)
+#
+#
+#                visited |= visitedPrev
+##                print('\n')
+##                res = printGraph(graph, clay, source, visited, rest)
+##                print('\n')
+#
+#            break
 
         n += 1
-        if not n % 10:
-            print(n)
+#        if not n % 100:
 
-        print('\n')
-        res = printGraph(graph, clay, sources[-1], visited, rest)
-        print('\n')
-
-
+    print('\n')
+    print('\n')
     res = printGraph(graph, clay, sourceO, visited, rest)
+
     # compensate for source
+    #FIXME: compensate for the y dist between source and first clay in y
     print(len(visited) + len(rest) - 1)
