@@ -9,6 +9,7 @@ import copy
 import itertools as it
 import functools as ft
 import collections as coll
+import pickle
 
 import sortedcontainers as sc
 from blist import blist
@@ -16,6 +17,20 @@ from blist import blist
 import re
 
 #re.search('@ (\d+),(\d+)', item).groups()))
+
+#TODO:
+#   sets
+#   extend in x infinitely
+#       build graph on the fly
+#   recurse sources, prevRest at the end
+
+
+#
+#   edges = graph[node].copy()
+#
+#KeyError: (97, 528)
+
+
 
 #only clay is counted
 def parseInput(inp):
@@ -79,7 +94,7 @@ def buildGraph(data):
     source = (0, (len(data[0])-1) // 2)
     return graph, source
 
-def printGraph(graph, source, visited=[], rest=[]):
+def printGraph(graph, source, visited={}, rest={}):
     res = np.chararray((max(graph, key=lambda t:t[0])[0]+1,
                         max(graph, key=lambda t:t[1])[1]+1), itemsize=1, unicode=True)
     res[:] = '#'
@@ -103,29 +118,38 @@ def printGraph(graph, source, visited=[], rest=[]):
 
 if __name__ == "__main__":
 
-    data = parseInput("input.txt")
+#    try:
+#        data = pickle.load(open('data', 'rb'))
+#    except:
+#    data = parseInput("input.txt")
+#        pickle.dump(data, open('data', 'wb'))
 
 
-#    data = ['......+.......',
-#'............#.',
-#'.#..#.......#.',
-#'.#..#..#......',
-#'.#..#..#......',
-#'.#.....#......',
-#'.#.....#......',
-#'.#######......',
-#'..............',
-#'..............',
-#'....#.....#...',
-#'....#.....#...',
-#'....#.....#...',
-#'....#######...',]
+    data = ['......+.......',
+'............#.',
+'.#..#.......#.',
+'.#..#..#......',
+'.#..#..#......',
+'.#.....#......',
+'.#.....#......',
+'.#######......',
+'..............',
+'..............',
+'....#.....#...',
+'....#.....#...',
+'....#.....#...',
+'....#######...',]
 
     graphS, sourceO = buildGraph(data)
-    sourceO = (0,500)
-
 
     graph = copy.deepcopy(graphS)
+
+#    try:
+#        graph = pickle.load(open('graph', 'rb'))
+#    except:
+#        graph = copy.deepcopy(graphS)
+#        pickle.dump(graph, open('graph', 'wb'))
+#    sourceO = (0,500)
 
     sizY = max(graph.keys(), key=lambda t: t[0])[0]
     sizX = max(graph.keys(), key=lambda t: t[1])[1]
@@ -143,18 +167,16 @@ if __name__ == "__main__":
                 newEdg[edg] = wght
         graph[(sizY, x)] = newEdg
 
-
-
 #    res = printGraph(graph, sourceO)
 
     source = sourceO
-    rest = coll.deque()
-    visitedPrev = coll.deque()
+    rest = set()
+    visitedPrev = set()
     prevRest = None
-    meta = {source: (None, )}
+#    meta = {source: (None, )}
 
     n = 0
-    while n < 2000:
+    while n < 500000:
         queue = coll.deque([source])
         visited = visitedPrev.copy()
 #        visited = coll.deque()
@@ -164,33 +186,37 @@ if __name__ == "__main__":
             node = queue.popleft()
 #            print(node, queue, visited)
 
-            candidates = graph[node].copy()
-
+            edges = graph[node].copy()
+            candidates = [edg for edg in edges]
             candidates = sorted(candidates, key=lambda x:(x[0],-x[1]), reverse=True)
 
             for child in candidates:
                 if child in visited:
                     candidates.remove(child)
 
-            queue = coll.deque(candidates)
+#            queue = coll.deque(candidates)
+            queue.clear()
+            queue.extend(candidates)
 
-            visited.append(node)
+            visited.add(node)
 
         # rest - came to stop not at boundary
         if node[0] not in [0, sizY] and node[1] not in [0, sizX]:
 
             # start another bfs to see if a lower node can be found
+
 #            print("rest candidate", node)
 
             queueR = coll.deque([node])
-            visitedR = coll.deque()
+            visitedR = set()
 
             found = False
 
             while len(queueR):
                 nodeR = queueR.popleft()
 
-                candidatesR = graph[nodeR].copy()
+                edgesR = graph[nodeR].copy()
+                candidatesR = [edg for edg in edgesR]
                 candidatesR = sorted(candidatesR, key=lambda x:(x[0],-x[1]), reverse=True)
 
                 for childR in candidatesR:
@@ -199,19 +225,21 @@ if __name__ == "__main__":
 
                 if len(candidatesR) and candidatesR[0][0] > node[0]:
                     found = True
-                    visitedR.append(nodeR)
+                    visitedR.add(nodeR)
                     break
 
-                queueR = coll.deque(candidatesR)
-                visitedR.append(nodeR)
+#                queueR = coll.deque(candidatesR)
+                queueR.clear()
+                queueR.extend(candidatesR)
+                visitedR.add(nodeR)
 
 #            res = printGraph(graph, node, visitedR, rest)
 
             if not found:
 #                print("rest:", node)
-                if node not in rest:
-                    rest.append(node)
+                rest.add(node)
                 prevRest = node
+                # rest nodes are invisible in the graph
                 for nd, ed in graph.items():
                     try:
                         del ed[node]
@@ -221,24 +249,26 @@ if __name__ == "__main__":
                 del graph[node]
             else:
                 source = node
-                visitedPrev += coll.deque([v for v in visited if v[0] < node[0] and v not in visitedPrev])
+#                visitedPrev += coll.deque([v for v in visited if v[0] < node[0] and v not in visitedPrev])
+                visitedPrev |= set([v for v in visited if v[0] < node[0]])
 #                print(source, visitedPrev)
 
         # reached the boundary - set new source, try all paths
         else:
-
-
             # new source- last visited next to rest and with somewhere to go
             # prevvisited - visited + current source
-            visitedPrev += (coll.deque([v for v in visited if v not in visitedPrev])
-                            + (coll.deque([source]) if source not in visitedPrev else coll.deque()))
+#            visitedPrev += (coll.deque([v for v in visited if v not in visitedPrev])
+#                            + (coll.deque([source]) if source not in visitedPrev else coll.deque()))
+            visitedPrev |= visited
+            visitedPrev.add(source)
+
             source = (prevRest[0]-1, prevRest[1])
 
             paths = [n for n in graph[source] if n not in visitedPrev]
 
             while len(paths):
                 queueEnd = coll.deque([source])
-                visitedEnd = coll.deque(visitedPrev)
+                visitedEnd = visitedPrev
 
                 while len(queueEnd):
                     nodeEnd = queueEnd.popleft()
@@ -251,15 +281,18 @@ if __name__ == "__main__":
                             candidatesEnd.remove(childEnd)
 
                     queueEnd = coll.deque(candidatesEnd)
-                    visitedEnd.append(nodeEnd)
+                    visitedEnd.add(nodeEnd)
 
-                visitedPrev += (coll.deque([v for v in visitedEnd if v not in visitedPrev]))
+                visitedPrev |= visitedEnd
                 paths = [n for n in graph[source] if n not in visitedPrev]
 
-            visited += (coll.deque([v for v in visitedPrev if v not in visited]))
+            visited |= visitedPrev
             break
 
         n += 1
+        if not n % 50:
+            print(n)
+
 #        print('\n')
 #        res = printGraph(graph, source, visited, rest)
 #        print('\n')
