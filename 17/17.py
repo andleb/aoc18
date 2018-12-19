@@ -93,10 +93,11 @@ def parseInputClay(inp):
             except:
                 pass
 
+    minY = min(clay, key=lambda t: t[0])[0]
     sizY = max(clay, key=lambda t: t[0])[0]
     sizX = max(clay, key=lambda t: t[1])[1]
 
-    return clay, sizY, sizX
+    return clay, minY, sizY, sizX
 
 def buildGraph(data):
     graph = {}
@@ -122,7 +123,6 @@ def buildGraph(data):
     return graph, source
 
 
-# FIXME:
 def printGraph(graph, clay, source, visited={}, rest={}):
     maxY = max((max(graph, key=lambda t:t[0], default=(1,1))[0]+1,
                 max(visited, key=lambda t:t[0], default=(1,1))[0]+1,
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 #
 #    data = parseInput("input.txt")
 
-    clay, sizY, sizX = parseInputClay("input.txt")
+    clay, minY, sizY, sizX = parseInputClay("input.txt")
     sourceO = (0, 500)
 
 #    data = ['......+.......',
@@ -233,13 +233,14 @@ if __name__ == "__main__":
 #'....#.....#...',
 #'....#.....#...',
 #'....#######...']
-#
+
 #    clay = set()
 #    for i, line in enumerate(data):
 #        for j, c in enumerate(line):
 #            if c == "#":
 #                clay.add((i,j))
 #
+#    minY = min(clay, key=lambda t: t[0])[0]
 #    sizY = max(clay, key=lambda t: t[0])[0]
 #    sizX = max(clay, key=lambda t: t[1])[1]
 #    sourceO = (0, (sizX) // 2)
@@ -249,6 +250,7 @@ if __name__ == "__main__":
 
     rest = set()
     visitedPrev = set()
+    visited = set()
 
     sources = coll.deque([sourceO])
     seenSources = set([sourceO])
@@ -261,7 +263,7 @@ if __name__ == "__main__":
 #    graph[sourceO] = {(sourceO[0]+1, sourceO[1]): 1}
 
     n = 0
-    while n < 50 and len(sources):
+    while n < 1000 and len(sources):
         print('\n')
         print(n, len(visitedPrev), len(visited), len(rest))
         res = printGraph(graph, clay, sources[-1], visited, rest)
@@ -274,7 +276,7 @@ if __name__ == "__main__":
         node = visitBFS(graph, clay, rest, visited, queue, sizY)
 
         # rest - came to stop not at boundary
-        if node[0] not in [0, sizY] and node[1] not in [0, sizX]:
+        if node[0] not in [minY, sizY]:
         # start another bfs to see if a lower node can be found
 #            print("rest candidate", node)
             visitedR = set()
@@ -285,10 +287,10 @@ if __name__ == "__main__":
 #            res = printGraph(graph, clay, nodeR, visitedR, rest)
 
             if nodeR[0] == node[0]:
-#                print("rest:", node)
+                print("rest:", node)
                 visitedR.add(node)
                 rest |= visitedR
-                prevRest.extend(visitedR)
+                prevRest.extend([v for v in visitedR if v not in prevRest])
 
                 # rest nodes are invisible in the graph
                 for nd, ed in graph.items():
@@ -300,16 +302,32 @@ if __name__ == "__main__":
 
                 for restNode in visitedR:
                     try:
-                        del graph[node]
+                        del graph[restNode]
                     except KeyError:
                             continue
 
             # filled reservoir: water can be taken to start flowing from here
             else:
-                if node not in seenSources:
+                if node not in seenSources and node[0] != sources[-1][0]:
+                    #FIX: set as source retraced visited to branching point
+                    #left
+                    newnode = (node[0], node[1]-1)
+                    while newnode in visited:
+                        visitedPrev.add(node)
+                        node = newnode
+                        newnode = (newnode[0], newnode[1]-1)
+                    #right
+                    else:
+                        newnode = (node[0], node[1]+1)
+                        while newnode in visited:
+                            visitedPrev.add(node)
+                            node = newnode
+                            newnode = (newnode[0], newnode[1]+1)
+
                     sources.append(node)
                     seenSources.add(node)
                 else:
+#                    visitedPrev |= visitedR
                     sources.pop()
 #                sources.append((prevRest[-1][0]-1, prevRest[-1][1]))
                 visitedPrev |= set([v for v in visited if v[0] < node[0]])
@@ -323,6 +341,11 @@ if __name__ == "__main__":
             visitedPrev |= visited
 
             newSource = (prevRest[-1][0]-1, prevRest[-1][1])
+            i = 2
+            while newSource in rest and i < len(prevRest):
+                newSource = (prevRest[-i][0]-1, prevRest[-i][1])
+                i += 1
+
             if newSource not in seenSources:
                 sources.append(newSource)
                 seenSources.add(newSource)
@@ -384,7 +407,9 @@ if __name__ == "__main__":
 #            break
 
         n += 1
-#        if not n % 100:
+        if not n % 100:
+            print(n, len(visitedPrev), len(visited), len(rest))
+
 
     print('\n')
     print('\n')
