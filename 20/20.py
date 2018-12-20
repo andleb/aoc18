@@ -9,9 +9,11 @@ import copy
 import itertools as it
 import functools as ft
 import collections as coll
+import operator as op
 
 import sortedcontainers as sc
 from blist import blist
+from prioritydict import priorityDictionary
 
 import re
 
@@ -122,31 +124,58 @@ def buildGraph(source,regex):
 
     return graph
 
+def Dijkstra(G, start, end=None):
+
+    D = {}	# dictionary of final distances
+    P = {}	# dictionary of predecessors
+    Q = priorityDictionary()   # est.dist. of non-final vert.
+    Q[start] = 0
+
+    for v in Q:
+        D[v] = Q[v]
+        if v == end:
+            break
+
+        for w in G[v]:
+#             vwLength = D[v] + G[v][w]
+             vwLength = D[v] + 1
+             if w in D:
+                 if vwLength < D[w]:
+                     raise ValueError("Dijkstra: found better path to already-final vertex")
+             elif w not in Q or vwLength < Q[w]:
+                 Q[w] = vwLength
+                 P[w] = v
+
+    return (D,P)
+
 
 if __name__ == "__main__":
 
-#    regex = parseInput("input.txt")
 
 #    graph1 = {
 #    (2,2):[(2,1)],
 #    (2,1):[(1,1)],
 #    (1,1):[(1,2)],
 #    (1,2):[(1,1)]}
-#
+
 #    data =\
 #['#####',
 #'#.|.#',
 #'#-###',
 #'#.|X#',
 #'#####']
-
+#
 #    source = (1,1)
 #    regex = '^WNE$'
-#    printGraph(graph1, source)
+#    graph = buildGraph(source, regex)
+#    res = printGraph(graph,source)
+#
+#    ar = np.array(list(map(list, data)))
+#    print(np.all(ar == res))
+#
+#    D, P = Dijkstra(graph, source)
 
 
-#    source = (2,2)
-#    regex = '^ENWWW(NEEE|SSE(EE|N))$'
 #    data =\
 #['#########',
 #'#.|.|.|.#',
@@ -157,6 +186,17 @@ if __name__ == "__main__":
 #'#-#-#####',
 #'#.|.|.|.#',
 #'#########']
+#
+#    source = (2,2)
+#    regex = '^ENWWW(NEEE|SSE(EE|N))$'
+#    graph = buildGraph(source, regex)
+#    res = printGraph(graph,source)
+#
+#    ar = np.array(list(map(list, data)))
+#    print(np.all(ar == res))
+#    D, P = Dijkstra(graph, source)
+#    print(D)
+
 
 
 #    data =[\
@@ -179,6 +219,10 @@ if __name__ == "__main__":
 #
 #    ar = np.array(list(map(list, data)))
 #    print(np.all(ar == res))
+#    D, P = Dijkstra(graph, source)
+#    print(D)
+#    maxRoom = max(D.items(), key=op.itemgetter(1))[0]
+#    print(maxRoom, D[maxRoom])
 
 #    data =\
 # ['#############',
@@ -202,6 +246,10 @@ if __name__ == "__main__":
 #
 #    ar = np.array(list(map(list, data)))
 #    print(np.all(ar == res))
+#    D, P = Dijkstra(graph, source)
+#    print(D)
+#    maxRoom = max(D.items(), key=op.itemgetter(1))[0]
+#    print(maxRoom, D[maxRoom])
 
 
 #    data =\
@@ -227,4 +275,30 @@ if __name__ == "__main__":
 #
 #    ar = np.array(list(map(list, data)))
 #    print(np.all(ar == res))
+#    D, P = Dijkstra(graph, source)
+#    print(D)
+#    maxRoom = max(D.items(), key=op.itemgetter(1))[0]
+#    print(maxRoom, D[maxRoom])
+
+    regex = parseInput("input.txt")[0][:-1]
+    source = (0,0)
+
+    graph = buildGraph(source, regex)
+
+    D, P = Dijkstra(graph, source)
+    print(D)
+    maxRoom = max(D.items(), key=op.itemgetter(1))[0]
+    print(maxRoom, D[maxRoom])
+
+
+    #2
+    tot = 0
+    for k,v in D.items():
+        if v >= 1000:
+            tot += 1
+
+    print(tot)
+
+
+
 
