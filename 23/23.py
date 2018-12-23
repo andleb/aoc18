@@ -14,6 +14,8 @@ import operator
 import sortedcontainers as sc
 from blist import blist
 
+import numpy as np
+
 import re
 
 #re.search('@ (\d+),(\d+)', item).groups()))
@@ -38,7 +40,8 @@ def getSamples(data):
     return samples
 
 def mht(a):
-    return int(np.round(np.sum(np.abs(a))))
+#    return int(np.round(np.sum(np.abs(a))))
+    return np.round(np.sum(np.abs(a)))
 
 def combinations_recursive_inner(n, buf, gaps, sm, accum):
   if gaps == 0:
@@ -54,6 +57,84 @@ def combinations_recursive(n, npoints=3):
   accum = []
   combinations_recursive_inner(n, [], npoints, 0, accum)
   return np.array(accum)
+
+
+#def radicalLine(cir1, r1, cir2, r2):
+#    d = mht(cir1 - cir2)
+#
+#    if d > (r1 + r2):
+#        return np.array()
+#    elif d <= abs(r1-r2):
+#        # contained or coincident
+#        return 0 if r1 <= r2 else 1
+#
+#    return
+
+def bisect(samples):
+
+    xs = samples[:, 0]
+    ys = samples[:, 0]
+    zs = samples[:, 0]
+
+    minx, maxx = min(xs), max(xs)
+    miny, maxy = min(ys), max(ys)
+    minz, maxz = min(zs), max(zs)
+    dx = maxx - minx
+    dx = dx // 2
+    dy = maxy - miny
+    dy = dy // 2
+    dz = maxz - minz
+    dz = dz // 2
+
+    highx = maxx
+    lowx = minx
+    highy = maxy
+    lowy = miny
+    highz = maxz
+    lowz = minz
+
+    best_count = 0
+    best_dist = 1e128
+    bestpt = None
+    neighs = combinations_recursive(3)
+    neighs = neighs[~np.any(np.abs(neighs) > 1, axis=1)]
+
+    while dx > 1 or dy > 1 or dz > 1:
+
+        d = np.array([dx, dy, dz])
+        midpt = np.array([(highx+lowx)//2, (highy+lowy)//2, (highz+lowz)//2])
+        radbox = np.sum(d//2)
+#        print(dx,dy,dz, midpt, radbox)
+        best_count = 0
+        best_dist = 1e128
+        bestpt = None
+        for n in neighs:
+            count = 0
+            pt = midpt + d * n
+
+            for robot in samples:
+                xb, yb, zb, rb = robot
+                if mht(pt - robot[:3]) <= (rb+radbox):
+                    count += 1
+
+            tiebreak = (count == best_count and mht(pt) < best_dist)
+            if count > best_count or tiebreak:
+                best_count = count
+                best_dist = mht(pt)
+                bestpt = pt
+
+        lowx,lowy,lowz = bestpt - d
+        highx,highy,highz = bestpt + d
+        dx = dx // 2
+        dy = dy // 2
+        dz = dz // 2
+
+#        print(lowx,lowy,lowz, highx, highy, highz)
+
+
+#    return lowx,lowy,lowz, highx, highy, highz
+    midpt = np.array([(highx+lowx)//2, (highy+lowy)//2, (highz+lowz)//2])
+    return midpt
 
 if __name__ == "__main__":
 
@@ -80,19 +161,20 @@ if __name__ == "__main__":
 
     samples = getSamples(data)
 
-    #1
-#    ssam = sorted(samples, key=lambda t: -t[3])
-#    r = ssam[0][3]
-#
-#    coors = np.array([t[:3] for t in ssam])
-#
-#    coorsn = coors - coors[0]
-#    dists = np.sum(np.vectorize(abs)(coorsn), axis=1)
-#    print(np.sum(dists<=r))
-#    print('\n')
+###1
+    ssam = sorted(samples, key=lambda t: -t[3])
+    r = ssam[0][3]
+
+    coors = np.array([t[:3] for t in ssam])
+
+    coorsn = coors - coors[0]
+    dists = np.sum(np.vectorize(abs)(coorsn), axis=1)
+    print(np.sum(dists<=r))
+    print('\n')
 
 
-    #2
+### 2
+
 #    minX = min(coors, key=lambda t:t[0])[0]
 #    minY = min(coors, key=lambda t:t[1])[1]
 #    minZ = min(coors, key=lambda t:t[2])[2]
@@ -103,153 +185,128 @@ if __name__ == "__main__":
 
     #get number of other bots in range of bot
     samples = np.array(samples)
-    crs = []
-    inrang = []
-    for i, robot in enumerate(samples):
-        # ignore self? NO!
-        coorsn = samples[:, :3] - robot[:3]
-        crs.append(coorsn)
-        dists = np.sum(np.vectorize(abs)(coorsn), axis=1)
+    pt = bisect(samples)
+    print(pt, mht(pt))
 
-        cmbdist = (robot[3] + samples[:, 3])
-        cmbdist[i] = robot[3]
 
-        inrang.append((i, np.sum(dists <= cmbdist), samples[dists <= cmbdist]))
+### previus algo, correct but too slow
 
-    inrang = sorted(inrang, key=lambda x: -x[1])
-
-    # only check the most likely bots
-    # get the point in range of most others
-
-    maxR = inrang[0][1]
-    i = 0
-    res = []
-
-    # all diffs to +-2 manhattan neighs
-    neighbors = np.concatenate((combinations_recursive(1),
-                               combinations_recursive(2)))
-    neighborsbp = np.concatenate((neighbors,
-                                 combinations_recursive(3)))
-
-    while inrang[i][1] == maxR:
-
-        j = inrang[i][0]
-        robot = samples[j]
-        x,y,z,r = robot
-        othrs = np.concatenate((inrang[i][2][:j], inrang[i][2][j+1:]))
-
-        # normalized others
-        # self excluded!
-        othrsn = np.zeros(othrs.shape, dtype=int)
-        othrsn[:,:3] = (othrs[:, :3] - robot[:3]).astype(int)
-        othrsn[:,3] = othrs[:, 3]
-
-        pts = {}
-        orig = np.array([x, y, z])
-
-        for robotO in othrsn:
-            b = robotO[:3]
-#            print(robotO)
-            # robot is in 0,0,0
-            direc = b
-            rb = robotO[3]
-            siz = np.sum(np.abs(direc))
-
-            # boundary is capped at the radius or at the other robot
-            bp = np.round(min(mht(b), r) * direc/siz).astype(int)
-
-            # boundary outside the ranges
-            if rb - mht(bp-b) < 0 or mht(bp) > r:
-
-                #check neighbours up to 3 away
-                for (k,l,m) in neighborsbp:
-                    neigh = bp + (k,l,m)
-                    if mht(neigh-b) <= rb and mht(neigh) <= r:
-                        bp = neigh
-                        break
-
-            # find commonpoints from boundary
-            if rb - mht(bp-b) >= 0 or mht(bp) <= r:
-                commonpts = {tuple(bp)}
-                queue = coll.deque([bp])
-
-                while queue:
-                    pt = queue.pop()
-
-                    for (k,l,m) in neighbors:
-                        neigh = pt + (k,l,m)
-#                        print(neigh)
-                        if mht(neigh-b) <= rb and mht(neigh) <= r:
-                            if tuple(neigh) not in commonpts:
-                                queue.append(neigh)
-                            commonpts.add(tuple(neigh))
-
-#                print(robot, orig+b, commonpts)
-            # walk towards origin while still in range of b
-#            while rbp <= rb - mht(bp-b) and (rbp - mht(bp)) <= r:
-#                print(robot, pt + b, rbp)
+#    crs = []
+#    inrang = []
+#    for i, robot in enumerate(samples):
+#        # ignore self? NO!
+#        coorsn = samples[:, :3] - robot[:3]
+#        crs.append(coorsn)
+#        dists = np.sum(np.vectorize(abs)(coorsn), axis=1)
 #
-#                isoOrig = isoOrigs[abs(mht(bp) - rbp)]
+#        cmbdist = (robot[3] + samples[:, 3])
+#        cmbdist[i] = robot[3]
 #
-#                # points that are same dist from both
-#                isob = b[:3] + combinations_recursive(mht(bp-b) + rbp, 3)
-
-#                commonpts = isob[np.all(np.isin(isob, isoOrig), axis=1)]
-#                commonpts = set(map(tuple,isob)) & set(map(tuple, isoOrig))
-
-                for x,y,z in commonpts:
-                    try:
-                        pts[tuple(orig + (x, y, z))] += 1
-                    except KeyError:
-                        pts[tuple(orig + (x, y, z))] = 1
-
-#                rbp += 1
-
-        # add self
-        for pt in pts.keys():
-            pts[pt] += 1
-
-
-        pts2 = sorted(pts.items(), key=lambda t: (-t[1], t[0]))
-        maxpt = pts2[0]
-        print(maxpt)
-        distmaxpt = np.sum(np.vectorize(abs)(maxpt[0]))
-        print(distmaxpt)
-        print('\n\n')
+#        inrang.append((i, np.sum(dists <= cmbdist), samples[dists <= cmbdist]))
+#
+#    inrang = sorted(inrang, key=lambda x: -x[1])
+#
+#    # only check the most likely bots
+#    # get the point in range of most others
+#
+#    maxR = inrang[0][1]
+#    i = 0
+#    res = []
+#
+#    # all diffs to +-2 manhattan neighs
+#    neighbors = np.concatenate((combinations_recursive(1),
+#                               combinations_recursive(2)))
+#    neighborsbp = np.concatenate((neighbors,
+#                                 combinations_recursive(3)))
+#
+#    while inrang[i][1] == maxR:
+#
+#        j = inrang[i][0]
+#        robot = samples[j]
+#        x,y,z,r = robot
+#        othrs = np.concatenate((inrang[i][2][:j], inrang[i][2][j+1:]))
+#
+#        # normalized others
+#        # self excluded!
+#        othrsn = np.zeros(othrs.shape, dtype=int)
+#        othrsn[:,:3] = (othrs[:, :3] - robot[:3]).astype(int)
+#        othrsn[:,3] = othrs[:, 3]
+#
+#        pts = {}
+#        orig = np.array([x, y, z])
+#
+#        for robotO in othrsn:
+#            # radical line
+#
+#
+#
+#            b = robotO[:3]
+##            print(robotO)
+#            # robot is in 0,0,0
+#            direc = b
+#            rb = robotO[3]
+#            siz = np.sum(np.abs(direc))
+#
+#            # boundary is capped at the radius or at the other robot
+#            bp = np.round(min(mht(b), r) * direc/siz).astype(int)
+#
+#            # boundary outside the ranges
+#            if rb - mht(bp-b) < 0 or mht(bp) > r:
+#
+#                #check neighbours up to 3 away
+#                for (k,l,m) in neighborsbp:
+#                    neigh = bp + (k,l,m)
+#                    if mht(neigh-b) <= rb and mht(neigh) <= r:
+#                        bp = neigh
+#                        break
+#
+#            # find commonpoints from (potentialy new) boundary point
+#            if rb - mht(bp-b) >= 0 and mht(bp) <= r:
+#                commonpts = {tuple(bp)}
+#                queue = coll.deque([bp])
+#
+#                while queue:
+#                    pt = queue.pop()
+#                                #up to 2 away
+#                    for (k,l,m) in neighbors:
+#                        neigh = pt + (k,l,m)
+##                        print(neigh)
+#                        if mht(neigh-b) <= rb and mht(neigh) <= r:
+#                            if tuple(neigh) not in commonpts:
+#                                queue.append(neigh)
+#                                commonpts.add(tuple(neigh))
+#
+##                print(robot, orig+b, commonpts)
+#
+#                for x,y,z in commonpts:
+#                    try:
+#                        pts[tuple(orig + (x, y, z))] += 1
+#                    except KeyError:
+#                        pts[tuple(orig + (x, y, z))] = 1
+#
+#
+#        # add self
+#        for pt in pts.keys():
+#            pts[pt] += 1
+#
+#
+#        pts2 = sorted(pts.items(), key=lambda t: (-t[1], t[0]))
+#        maxpt = pts2[0]
+#        print(maxpt)
+#        distmaxpt = np.sum(np.vectorize(abs)(maxpt[0]))
+#        print(distmaxpt)
+#        print('\n\n')
+##        res.append((i, maxpt, pts2))
 #        res.append((i, maxpt, pts2))
-        res.append((i, maxpt, pts2))
-
-        i += 1
+#
+#        i += 1
 
 
 #print(sorted([x[1] for x in res], key=lambda x: -x[0]))
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#brute force
+### brute force
 ##
 #    pts = {}
 #
@@ -274,4 +331,5 @@ if __name__ == "__main__":
 #    print(maxpt[0])
 #    distmaxpt = np.sum(np.vectorize(abs)(maxpt[0]))
 #    print(distmaxpt)
+
 
