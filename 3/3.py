@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec  3 05:36:23 2018
+Created on Mon Dec 3 05:36:23 2018
 
 @author: Andrej Leban
 """
-
-import itertools as it
-import functools as ft
-import collections as coll
 
 import re
 
@@ -20,6 +16,7 @@ def parseInput(inp):
 
     return data
 
+
 def color(data):
     items = []
     fabric = {}
@@ -29,30 +26,28 @@ def color(data):
         offx, offy = tuple(map(int, re.search('@ (\d+),(\d+)', item).groups()))
         sizx, sizy = tuple(map(int, re.search(': (\d+)x(\d+)', item).groups()))
 
-
         items.append((itId, offx, offy, sizx, sizy))
 #        print(items[-1])
 
         for x in range(sizx):
             for y in range(sizy):
                 try:
-                    fabric[(x + offx,y+offy)] += 1
-                except:
-                    fabric[(x+offx,y+offy)] = 1
-
+                    fabric[(x + offx, y+offy)] += 1
+                except KeyError:
+                    fabric[(x+offx, y+offy)] = 1
 
     return fabric, items
 
 
 def sol(fabric):
-    return len(list(filter(lambda x: x>=2, fabric.values())))
+    return len(list(filter(lambda x: x >= 2, fabric.values())))
 
 
 def intact(items, fabric):
     candidates = []
 
     for item in items:
-#        print(item).
+#        print(item)
         fail = False
         itId, offx, offy, sizx, sizy = item
 
@@ -70,19 +65,14 @@ def intact(items, fabric):
     return candidates
 
 
-
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
+
+    data = parseInput("input.txt")
 
     color(data)
 
+    fabric, items = color(data)
 
+    print(sol(fabric))
 
+    print(intact(items, fabric))

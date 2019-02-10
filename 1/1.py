@@ -5,6 +5,9 @@ Created on Sun Dec  2 17:37:13 2018
 @author: Andrej Leban
 """
 
+import itertools as it
+
+
 def parseInput(inp):
     data = []
     with open(inp, 'r') as f:
@@ -13,8 +16,10 @@ def parseInput(inp):
 
     return data
 
+
 def first(data):
     return sum(data)
+
 
 def second(data):
     c = it.accumulate(it.cycle(data))
@@ -27,4 +32,3 @@ def second(data):
             return el, i
         else:
             seen.add(el)
-

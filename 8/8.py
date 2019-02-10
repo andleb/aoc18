@@ -5,16 +5,6 @@ Created on Sat Dec  8 07:02:47 2018
 @author: Andrej Leban
 """
 
-import itertools as it
-import functools as ft
-import collections as coll
-
-import sortedcontainers as sc
-
-import re
-
-#re.search('@ (\d+),(\d+)', item).groups()))
-
 def parseInput(inp):
     data = []
     with open(inp, 'r') as f:
@@ -22,7 +12,6 @@ def parseInput(inp):
             data.append(line)
 
     return data
-
 
 tot = 0
 
@@ -49,8 +38,6 @@ if __name__ == "__main__":
 #    data = data.split(" ")
 
     data = list(map(int,data))
-
-#def buildTree(data):
 
     tree = {}
     i = 0
@@ -88,41 +75,6 @@ if __name__ == "__main__":
             nChild = tree[node][0][0]
 
         node = oldNode + 1
-#
-#
-#
-#        oldNode = node
-#
-#        #last child, recursively add metadata
-#        while (tree[parent][0][0] == len(tree[parent][3])\
-#            and node in tree[parent][3]):
-##                and tree[parent][3][-1] == node):
-#
-#            node = parent
-#            nMd = tree[node][0][1]
-#
-#            tree[node][1].extend(data[i:i+nMd])
-#
-#            i += nMd
-#            parent = tree[node][2]
-#            print(parent)
-#            print("")
-#
-#            # root
-#            if tree[parent][2] is None:
-#                nMd = tree[parent][0][1]
-#                tree[parent][1].extend(data[i:i+nMd])
-#                i += nMd
-#                break
-#
-#        node = oldNode + 1
-
-#    return tree
-
-
-#    tree, i = buildTree(data)
-#    print(tree)
-
 
     for k,v in tree.items():
         if v[0][1] != len(v[1]):
@@ -134,31 +86,8 @@ if __name__ == "__main__":
 #        print(k, v)
         mdsum += sum(v[1])
 
-#    print(mdsum)
-
-#    node = 0
-#    tot = 0
+    print(mdsum)
 
     value(0)
     print(tot)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#    a = np.array(list(map(int,data)))

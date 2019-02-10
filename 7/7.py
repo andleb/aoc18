@@ -5,14 +5,9 @@ Created on Thu Dec  6 21:27:18 2018
 @author: Andrej Leban
 """
 
-import itertools as it
-import functools as ft
-import collections as coll
-
-import sortedcontainers as sc
 import re
 
-#re.search('@ (\d+),(\d+)', item).groups()))
+import sortedcontainers as sc
 
 
 def parseInput(inp):
@@ -22,6 +17,7 @@ def parseInput(inp):
             data.append(line)
 
     return data
+
 
 def buildGraph(data):
     graph = {}
@@ -59,6 +55,7 @@ def parents(node, graph):
 
 
 if __name__ == "__main__":
+
     data = parseInput("input.txt")
 
 #    data = ['Step C must be finished before step A can begin.',
@@ -92,7 +89,7 @@ if __name__ == "__main__":
             if len(parents(m, graph)) == 0:
                 roots.add(m)
 
-    print("".join(visited))
+#    print("".join(visited))
 
 #2:
     graph, root1 = buildGraph(data)
@@ -132,66 +129,39 @@ if __name__ == "__main__":
                     visited.append(k)
                     del working[k]
 
-#                    print(working, roots, root, visited)
-
-#                    try:
-#                        root = roots.__iter__().__next__()
-#                    except:
-#                        break
-#
-#                    roots -= set(root)
-#                    working[root] = ord(root) - 64
-#
-#                    for m in graph[root]:
-#                        graph[root] = graph[root][1:]
-#                        if len(parents(m, graph)) == 0:
-#                            roots.add(m)
-
-#            print(working, roots, root, visited)
-
             i = 0
             itr = roots.__iter__()
             while i < len(roots) and len(working) < numworkers:
                 try:
                     fakeroot = itr.__next__()
-                except:
+                except StopIteration:
                     break
 
 #                print(fakeroot)
                 i += 1
 #                print(parents(fakeroot, graph2), visited)
+
                 if set(parents(fakeroot, graph2)).issubset(set(visited)):
                     root = fakeroot
                     roots -= set(fakeroot)
                     working[fakeroot] = ord(fakeroot) - 64 + 60
 #                    print(working, roots, root, visited)
+
                     for m in graph[root]:
                         graph[root] = graph[root][1:]
                         if len(parents(m, graph)) == 0:
                             roots.add(m)
 
 
-        print(working, roots, root, visited, duration, "\n")
+#        print(working, roots, root, visited, duration, "\n")
 
         if len(working) <= 0:
-#            print(working, roots, root, visited, "\n")
-#            visited.append(root)
             break
         else:
             duration += 1
 
 print("".join(visited))
 print(duration)
-
-#        root = roots.__iter__().__next__()
-#        roots -= set(root)
-
-#        visited.append(root)
-
-#        for m in graph[root]:
-#            graph[root] = graph[root][1:]
-#            if len(parents(m, graph)) == 0:
-#                roots.add(m)
 
 
 

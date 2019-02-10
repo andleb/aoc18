@@ -5,15 +5,7 @@ Created on Wed Dec  5 05:58:14 2018
 @author: Andrej Leban
 """
 
-import itertools as it
-import functools as ft
-import collections as coll
-
-import sortedcontainers as sc
-
-import re
-
-#re.search('@ (\d+),(\d+)', item).groups()))
+import numpy as np
 
 def parseInput(inp):
     data = []
@@ -32,10 +24,6 @@ def elim(s):
     rem = np.where(abs(diff) == 32)
     rem2 = np.unique(np.append(rem, rem - np.ones(len(rem))))
     print(rem2)
-#    rem2.
-
-#    print(rem2)
-#    rem2.sort()
 
     newS = []
     last = 0
@@ -53,11 +41,11 @@ def elim(s):
 
             if j == 2:
 #               print(i, j, last, s[i])
-               if i - last == 1:
-                   newS.append(s[i])
-               else:
-                   last = i
-                   j = 0
+                if i - last == 1:
+                    newS.append(s[i])
+                else:
+                    last = i
+                    j = 0
             else:
 #                print(i, j, last)
                 j += 1
@@ -81,10 +69,9 @@ def elim2(s, last="0"):
 
         switch = False
         if abs(ord(curr) - ord(prev)) == 32:
-#            while (abs(ord(curr) - ord(prev)) == 32) and (i < end and j >= 0):
             while (abs(ord(curr) - ord(prev)) == 32):
                 try:
-                    print(i,j, curr, prev, ret)
+#                    print(i, j, curr, prev, ret)
                     i = min((i + 1, end-1))
                     if j > lasti:
                         j = max((0, j-1))
@@ -97,26 +84,17 @@ def elim2(s, last="0"):
                         prev = "".join(ret)[j]
 
                     curr = s[i]
-                    print(i,j, curr, prev)
+#                    print(i, j, curr, prev)
                 except IndexError:
                     pass
 
-#            if not abs(curr) - ord(prev) == 32:
-#                ret.append(s[i-3])
-#            else:
-#                i = i + 1
             ret.append(s[lasti:j+1])
             lasti = i
 #            print(ret)
-#            last
-
-
-#            ret.append(s[lasti:(i-2)])
-
-#        last = s[i]
 
     ret.append(s[lasti:i+2])
     return "".join(ret)
+
 
 def elim3(s):
     sOld = None
@@ -129,50 +107,26 @@ def elim3(s):
 
 
 if __name__ == "__main__":
+
     data = parseInput("input.txt")
-#     end \n
     s = data[0][:-1]
-    s0 = s
 
 #    s0 = 'dabAcCaCBAcCcaDA'
 #    s0 = 'tRrgPgGvVpGyYTvVemMQnNqQxXtTqOMmxHhFfGgXhZzSKJjMmksKkDDdaAdrRzZlkKLWwiInmMneEPIipBbNjJFfVvNvdDVsuUSHoCpcCPcHhmiUuSsoiIxXQqODdkKUvhdDuUwWoWwOSsHOoFfVJbBvxXlLVVvj'
 #    s0 = 'tRrgPgGvVpGyYTvVemMQnNqQxXtTqOMmxHhFfGgXhZzSKJjMmksKkDD'
 #    s0 ='RrcCCctmMgq.QhXyYxHyHWwKkhqAaFfOoQRrIuDdaAUiOomwWlLFFdDfHh'
-    s = s0
+#    s = s0
 
-#    left = list(s) + ["0"]
-#    right = ["0"] + list(s)
-
-#    diff = np.array(list(map(ord, right))) - np.array(list(map(ord, left)))
-
-#    print(elim(s))
-
-#    s2, _, __ =  elim(s)
-#
-#    while len(s2) < len(s):
-#        s = s2
-#        s2, _, __ = elim(s)
-#
-##    print(s2)
-#    print(len(s2))
-#
-#    s2, rem, rem2 = elim(s)
-
-#    print(elim2(s))
-#    print(len(elim2(s)))
-
-#    print(s)
-    print(len(s))
     s2 = elim3(s)
+
     while len(s2) < len(s):
 #        print(s2)
-        print(len(s2))
+#        print(len(s2))
         s = s2
         s2 = elim3(s)
 
 #    print(s2)
     print(len(s2))
-
 
     best = 1e18
     for i in range(1, 26):

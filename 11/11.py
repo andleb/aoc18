@@ -6,15 +6,9 @@ Created on Mon Dec 10 22:11:00 2018
 """
 
 import itertools as it
-import functools as ft
-import collections as coll
 
-import sortedcontainers as sc
-from blist import blist
+import numpy as np
 
-import re
-
-#re.search('@ (\d+),(\d+)', item).groups()))
 
 def parseInput(inp):
     data = []
@@ -32,13 +26,13 @@ def consecutive_ones(sequence):
                                      it.dropwhile(lambda p: p != 1, itr)))
     return it.takewhile(lambda t: len(t), _consecutives())
 
+
 def sames(sequence):
     def _same():
         for itr in it.repeat(iter(sequence)):
             yield tuple(it.takewhile(lambda p: p == 1,
                                      it.dropwhile(lambda p: p != 1, itr)))
     return it.takewhile(lambda t: len(t), _same())
-
 
 
 def powerLevel(x, y, serial):
@@ -55,12 +49,9 @@ def powerLevel(x, y, serial):
 
 if __name__ == "__main__":
 
-#    data = parseInput("input.txt")
 #    serial = 18
 #    serial = 42
     serial = 6303
-
-#    print(serial)
 
     plmat = np.zeros((300,300))
 
@@ -81,8 +72,7 @@ if __name__ == "__main__":
 
     maxy, maxx=  np.unravel_index(plsummat.argmax(), plsummat.shape)
 
-    print(maxx-1, maxy-1, plsummat[maxy][maxx])
-
+    print(maxx, maxy, plsummat[maxy][maxx])
 
 
     #part2
@@ -92,13 +82,12 @@ if __name__ == "__main__":
     for siz in range(1,300):
 
         plsummat = np.zeros((300,300))
-#        plsummat.fill(0)
 
         if not siz % 2:
             tile = siz // 2
             prev = known[tile][3]
 
-            print("2", siz,  tile)
+#            print("2", siz,  tile)
 
             for y in range(0, plsummat.shape[0] - siz + 1 ):
                 for x in range(0, plsummat.shape[1] - siz + 1):
@@ -113,7 +102,7 @@ if __name__ == "__main__":
             tile = siz // 3
             prev = known[tile][3]
 
-            print("3", siz, tile)
+#            print("3", siz, tile)
 
             for y in range(0, plsummat.shape[0] - siz + 1):
                 for x in range(0, plsummat.shape[1] - siz + 1):
@@ -126,7 +115,7 @@ if __name__ == "__main__":
             known[siz] = (maxx, maxy, plsummat[maxy][maxx], plsummat)
 
         else:
-            print("fresh",siz)
+#            print("fresh", siz)
 
             for y in range(0, plsummat.shape[0] - siz + 1):
                 for x in range(0, plsummat.shape[1] - siz + 1):
@@ -140,7 +129,6 @@ if __name__ == "__main__":
 
         print(siz, maxx, maxy, plsummat[maxy][maxx])
 
-
     maxsiz = 0
     maxp = -1
     for k, v in known.items():
@@ -148,15 +136,3 @@ if __name__ == "__main__":
         if v[2] >= maxp:
             maxp = v[2]
             maxsix = k
-
-
-
-
-
-
-
-
-
-
-
-

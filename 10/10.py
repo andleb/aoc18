@@ -14,11 +14,11 @@ from blist import blist
 
 import re
 
+import numpy as np
 import scipy.signal
 import scipy.sparse
 import matplotlib.pyplot as plt
 
-#re.search('@ (\d+),(\d+)', item).groups()))
 
 def parseInput(inp):
     data = []
@@ -36,12 +36,14 @@ def consecutive_ones(sequence):
                                      it.dropwhile(lambda p: p != 1, itr)))
     return it.takewhile(lambda t: len(t), _consecutives())
 
+
 def sames(sequence):
     def _same():
         for itr in it.repeat(iter(sequence)):
             yield tuple(it.takewhile(lambda p: p == 1,
                                      it.dropwhile(lambda p: p != 1, itr)))
     return it.takewhile(lambda t: len(t), _same())
+
 
 if __name__ == "__main__":
 
@@ -79,28 +81,24 @@ if __name__ == "__main__":
 #            "position=<14,  7> velocity=<-2,  0>",
 #            "position=<-3,  6> velocity=< 2, -1>"]
 
-
     pos = []
     dpos = []
 
     #init
     for line in data:
-#        try:
         y, x, dy, dx = tuple(map(int,
-#                     re.search('position=< (\d+),\s*(\d+)>.*velocity=< (\d+),\s*(\d+)>.*',line).\
             re.search('position=<\s*([-,0-9]+)\s*,\s*([-,0-9]+)\s*>.*'
                       'velocity=<\s*([-,0-9]+)\s*,\s*([-,0-9]+)', line).\
                      groups()))
         pos.append((y,x))
         dpos.append((dy,dx))
-#        except:
-#            pass
 
     posy = np.array([t[1] for t in pos])
     posx = np.array([t[0] for t in pos])
     dposy = np.array([t[1] for t in dpos])
     dposx = np.array([t[0] for t in dpos])
 
+# vertical line detection via convolution attempt
 #    sy = sorted(posy)
 #    sx = sorted(posx)
 #
@@ -131,7 +129,6 @@ if __name__ == "__main__":
     res = []
     critLx = 8
     critLy = 8
-
 
     i = 0
     while len(res) < 1:
@@ -229,14 +226,6 @@ if __name__ == "__main__":
         if not i % 100000:
             print(i)
 
-#map(lambda x:x[0][0], # obtain the index of the first element
-#    sorted([list(l) for _,l in itertools.groupby(enumerate(x), key=lambda x:x[1])],
-#                 # create tuples with their indices
-#        # group in value, not on index
-#           key=lambda l: -len(l)))
-
-
-
     sor = res[0][2]
     sx, sy = zip(*sor)
     sy = sorted(sy)
@@ -248,14 +237,9 @@ if __name__ == "__main__":
     for x, y in res[0][2]:
         try:
             pic[y-offsety, x-offsetx] = 1
-        except:
+        except KeyError:
             pass
-#
+
     print("\n\n\n",pic,"\n\n\n")
 
-
-
-
-
-
-
+    print(i)

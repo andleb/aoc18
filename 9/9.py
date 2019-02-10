@@ -40,12 +40,9 @@ def ccwise(curr, n, lst):
         return 1
     return (curr - n) % len(lst)
 
-if __name__ == "__main__":
+def solve(maxM, nplayers):
 
-    maxM = 7162800
-    nplayers = 448
     data = [i for i in range(1, maxM+1)]
-#    data = data[:-1] + [7162800]
 
     cycle = blist([0])
     current = 0
@@ -56,6 +53,7 @@ if __name__ == "__main__":
 
     for m in data:
 #        print(cycle, cycle[current], current)
+
         #tie break
         if not m % 23:
 
@@ -80,18 +78,23 @@ if __name__ == "__main__":
         current = i
         elf = elves.__next__()
 
-#iI = np.where(cycle == 0)
-#iI = cycle.index(0)
-#cycle2 = cycle[iI:] + cycle[:iI]
+    return kept
 
-score = list(map(sum, kept))
-print(max(score))
 
-#for k in kept:
-#    if maxM in k:
-#        k.remove(maxM)
-#        k.add(maxM * 100)
-#
-#score = list(map(sum, kept))
-#print(max(score))
+if __name__ == "__main__":
 
+    maxM = 71628
+    nplayers = 448
+
+    kept = solve(maxM, nplayers)
+
+    score = list(map(sum, kept))
+    print(max(score))
+
+    maxM = 7162800
+    nplayers = 448
+
+    kept = solve(maxM, nplayers)
+
+    score = list(map(sum, kept))
+    print(max(score))

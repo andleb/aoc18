@@ -5,6 +5,7 @@ Created on Sun Dec  2 18:21:05 2018
 @author: Andrej Leban
 """
 
+
 def parseInput(inp):
     data = []
     with open(inp, 'r') as f:
@@ -12,6 +13,7 @@ def parseInput(inp):
             data.append(line)
 
     return data
+
 
 def count(string, ret=None):
     if ret is None:
@@ -24,6 +26,7 @@ def count(string, ret=None):
             ret[c] = 1
     return ret
 
+
 def repeats(count):
     twos, threes = 0, 0
     for v in count.values():
@@ -33,6 +36,7 @@ def repeats(count):
             threes += 1
 
     return twos, threes
+
 
 def checksum(data):
     run2, run3 = 0, 0
@@ -46,11 +50,9 @@ def checksum(data):
     return run2 * run3
 
 
-
-
 # second:
 
-data = parseInput("input2.txt"):
+data = parseInput("input2.txt")
 
 ll = list(map(list, data))
 
@@ -61,20 +63,11 @@ for i in range(0, len(ll)):
         iN = list(map(ord, ll[i]))
         jN = list(map(ord, ll[j]))
 
-        diff = list(map(lambda x,y: x-y, iN, jN))
+        diff = list(map(lambda x, y: x - y, iN, jN))
 
-        crit = len(list(filter(lambda x: x !=0, diff)))
+        crit = len(list(filter(lambda x: x != 0, diff)))
+
         if crit == 1:
             print(i, j, diff)
             candidates.append(str(ll[i]))
             candidates.append(str(ll[j]))
-
-
-
-
-
-
-
-
-
-
