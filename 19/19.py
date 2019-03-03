@@ -5,24 +5,8 @@ Created on Wed Dec 19 05:46:54 2018
 @author: Andrej Leban
 """
 
-import copy
-import itertools as it
-import functools as ft
-import collections as coll
-
-import sortedcontainers as sc
-from blist import blist
-
 import re
 
-#re.search('@ (\d+),(\d+)', item).groups()))
-
-def ip(inp, inst):
-    global g_ip
-
-    g_ip = inst[0]
-
-    return g_ip
 
 def parseInput(inp):
     data = []
@@ -32,105 +16,74 @@ def parseInput(inp):
 
     return data
 
+
 def addr(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] + inp[b]
-    return outp
+    inp[inst[2]] = inp[inst[0]] + inp[inst[1]]
+
 
 def addi(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] + b
-    return outp
+    inp[inst[2]] = inp[inst[0]] + inst[1]
+
 
 def mulr(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] * inp[b]
-    return outp
+    inp[inst[2]] = inp[inst[0]] * inp[inst[1]]
+
 
 def muli(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] * b
-    return outp
+    inp[inst[2]] = inp[inst[0]] * inst[1]
+
 
 def banr(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] & inp[b]
-    return outp
+    inp[inst[2]] = inp[inst[0]] & inp[inst[1]]
+
 
 def bani(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] & b
-    return outp
+    inp[inst[2]] = inp[inst[0]] & inst[1]
+
 
 def borr(inp, inst):
     a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] | inp[b]
-    return outp
+    inp[inst[2]] = inp[inst[0]] | inp[inst[1]]
+
 
 def bori(inp, inst):
     a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a] | b
-    return outp
+    inp[inst[2]] = inp[inst[0]] | inst[1]
+
 
 def setr(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = inp[a]
-    return outp
+    inp[inst[2]] = inp[inst[0]]
+
 
 def seti(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = a
-    return outp
+    inp[inst[2]] = inst[0]
+
 
 def gtir(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = int(a > inp[b])
-    return outp
+    inp[inst[2]] = int(inst[0] > inp[inst[1]])
+
 
 def gtri(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = int(inp[a] > b)
-    return outp
+    inp[inst[2]] = int(inp[inst[0]] > inst[1])
+
 
 def gtrr(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = int(inp[a] > inp[b])
-    return outp
+    inp[inst[2]] = int(inp[inst[0]] > inp[inst[1]])
+
 
 def eqir(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = int(a == inp[b])
-    return outp
+    inp[inst[2]] = int(inst[0] == inp[inst[1]])
+
 
 def eqri(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = int(inp[a] == b)
-    return outp
+    inp[inst[2]] = int(inp[inst[0]] == inst[1])
+
 
 def eqrr(inp, inst):
-    a, b, c = inst
-    outp = list(inp)
-    outp[c] = int(inp[a] == inp[b])
-    return outp
+    inp[inst[2]] = int(inp[inst[0]] == inp[inst[1]])
 
 
 ops = {
-       '#ip': ip,
        'addr': addr,
        'addi': addi,
        'mulr': mulr,
@@ -156,16 +109,23 @@ def getProgram(data):
     for line in data:
         try:
             op, a, b, c = re.search('(\w+)\s*(\d+)\s*(\d+)\s*(\d+)\s*', line).groups()
-            program.append((op, ) + tuple(map(int, (a,b,c))))
-        except:
+            program.append((op, ) + tuple(map(int, (a, b, c))))
+        except ValueError:
             op, ipP = re.search('(#\w+)\s*(\d+)\s*', line).groups()
-            program.append((op, ) + tuple(map(int, (ipP, ))) + (0,0,))
+            program.append((op, ) + tuple(map(int, (ipP, ))) + (0, 0,))
 
     return program
 
 
+def divisors(num):
+    ret = []
+    for x in range(1, num + 1):
+        if (num % x) == 0:
+            ret.append(x)
+    return ret
+
+
 if __name__ == "__main__":
-    global g_ip
 
     data = parseInput("input.txt")
 
@@ -181,40 +141,29 @@ if __name__ == "__main__":
 
     program = getProgram(data)
 
-    registers = [1,0,0,0,0,0]
-    newregisters = [1,0,0,0,0,0]
+    registers = [1, 0, 0, 0, 0, 0]
 
-#    nipchanges = 0
     g_ip = 3
     valip = 0
 
     niter = 0
 
-    while valip in range(0, len(program)):
+    hist = []
+
+    while valip in range(0, len(program)) and niter < 1e6:
         op, a, b, c = program[valip]
 
-#        if op == '#ip':
-#            ops[op](registers, (a,b,c))
-##            print(g_ip, 'ip=', registers[g_ip], nipchanges)
-##            nipchanges += 1
-#        else:
-
-        ipbef = valip
         registers[g_ip] = valip
-        newregisters = ops[op](registers, (a,b,c))
-        valip = newregisters[g_ip]
+        ops[op](registers, (a, b, c))
+        valip = registers[g_ip]
         valip += 1
-        newregisters[g_ip] += 1
-#        print(g_ip, 'ip=', ipbef , newregisters[g_ip], registers, op, a, b, c, newregisters)
-
-        registers = newregisters.copy()
-#            registers[g_ip] += 1
 
         niter += 1
-        if not niter % 100000:
-            print(niter, g_ip, 'ip=', ipbef, registers[g_ip], registers, op, a, b, c, newregisters)
+        if not niter % 10000:
+            print(niter, g_ip, 'ip=', registers[g_ip], op, a, b, c, registers)
+            hist.append(registers)
 
 
-
-
+### part 2 - analytic solution
+    print(sum(divisors(hist[0][2])))
 

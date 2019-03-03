@@ -5,20 +5,10 @@ Created on Sun Dec 23 06:01:54 2018
 @author: Andrej Leban
 """
 
-import copy
-import itertools as it
-import functools as ft
-import collections as coll
-import operator
-
-import sortedcontainers as sc
-from blist import blist
-
 import numpy as np
 
 import re
 
-#re.search('@ (\d+),(\d+)', item).groups()))
 
 def parseInput(inp):
     data = []
@@ -34,41 +24,33 @@ def getSamples(data):
     samples = []
     for line in data:
             x, y, z, r = re.search(
-            '\s*pos\s*=\s*<\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*>\s*,\s*r\s*=\s*([+-]?\d+)\s*', line).groups()
-            samples.append(tuple(map(int,(x,y,z,r))))
+            '\s*pos\s*=\s*<\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*>\s*'
+                ',\s*r\s*=\s*([+-]?\d+)\s*', line).groups()
+            samples.append(tuple(map(int, (x, y, z, r))))
 
     return samples
 
+
 def mht(a):
-#    return int(np.round(np.sum(np.abs(a))))
     return np.round(np.sum(np.abs(a)))
 
+
 def combinations_recursive_inner(n, buf, gaps, sm, accum):
-  if gaps == 0:
-    accum.append(buf)
-  else:
-    for x in range(-n, n+1):
-        if sm + abs(x) + (gaps - 1) * n < n:
-            continue
-        if not sm + abs(x) > n:
-            combinations_recursive_inner(n, buf + [x], gaps - 1, sm + abs(x), accum)
+    if gaps == 0:
+        accum.append(buf)
+    else:
+        for x in range(-n, n + 1):
+            if sm + abs(x) + (gaps - 1) * n < n:
+                continue
+            if not sm + abs(x) > n:
+                combinations_recursive_inner(n, buf + [x], gaps - 1, sm + abs(x), accum)
+
 
 def combinations_recursive(n, npoints=3):
-  accum = []
-  combinations_recursive_inner(n, [], npoints, 0, accum)
-  return np.array(accum)
+    accum = []
+    combinations_recursive_inner(n, [], npoints, 0, accum)
+    return np.array(accum)
 
-
-#def radicalLine(cir1, r1, cir2, r2):
-#    d = mht(cir1 - cir2)
-#
-#    if d > (r1 + r2):
-#        return np.array()
-#    elif d <= abs(r1-r2):
-#        # contained or coincident
-#        return 0 if r1 <= r2 else 1
-#
-#    return
 
 def bisect(samples):
 
@@ -102,9 +84,10 @@ def bisect(samples):
     while dx > 1 or dy > 1 or dz > 1:
 
         d = np.array([dx, dy, dz])
-        midpt = np.array([(highx+lowx)//2, (highy+lowy)//2, (highz+lowz)//2])
-        radbox = np.sum(d//2)
-#        print(dx,dy,dz, midpt, radbox)
+        midpt = np.array([(highx + lowx) // 2, (highy + lowy) // 2,
+                          (highz + lowz) // 2])
+        radbox = np.sum(d // 2)
+
         best_count = 0
         best_dist = 1e128
         bestpt = None
@@ -114,7 +97,7 @@ def bisect(samples):
 
             for robot in samples:
                 xb, yb, zb, rb = robot
-                if mht(pt - robot[:3]) <= (rb+radbox):
+                if mht(pt - robot[:3]) <= (rb + radbox):
                     count += 1
 
             tiebreak = (count == best_count and mht(pt) < best_dist)
@@ -123,23 +106,22 @@ def bisect(samples):
                 best_dist = mht(pt)
                 bestpt = pt
 
-        lowx,lowy,lowz = bestpt - d
-        highx,highy,highz = bestpt + d
+        lowx, lowy, lowz = bestpt - d
+        highx, highy, highz = bestpt + d
         dx = dx // 2
         dy = dy // 2
         dz = dz // 2
 
-#        print(lowx,lowy,lowz, highx, highy, highz)
-
-
-#    return lowx,lowy,lowz, highx, highy, highz
-    midpt = np.array([(highx+lowx)//2, (highy+lowy)//2, (highz+lowz)//2])
+    midpt = np.array([(highx + lowx) // 2, (highy + lowy) // 2,
+                      (highz+lowz) // 2])
     return midpt
+
 
 if __name__ == "__main__":
 
     data = parseInput("input.txt")
 
+### EXAMPLES
 #    data =[\
 #'pos=<0,0,0>, r=4',
 #'pos=<1,0,0>, r=1',
@@ -161,7 +143,7 @@ if __name__ == "__main__":
 
     samples = getSamples(data)
 
-###1
+### 1
     ssam = sorted(samples, key=lambda t: -t[3])
     r = ssam[0][3]
 
@@ -169,19 +151,10 @@ if __name__ == "__main__":
 
     coorsn = coors - coors[0]
     dists = np.sum(np.vectorize(abs)(coorsn), axis=1)
-    print(np.sum(dists<=r))
+    print(np.sum(dists <= r))
     print('\n')
 
-
 ### 2
-
-#    minX = min(coors, key=lambda t:t[0])[0]
-#    minY = min(coors, key=lambda t:t[1])[1]
-#    minZ = min(coors, key=lambda t:t[2])[2]
-#
-#    maxX = max(coors, key=lambda t:t[0])[0]
-#    maxY = max(coors, key=lambda t:t[1])[1]
-#    maxZ = max(coors, key=lambda t:t[2])[2]
 
     #get number of other bots in range of bot
     samples = np.array(samples)
