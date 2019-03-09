@@ -17,10 +17,13 @@ seti 0 0 4
 #A
 #init state
 [0,0,0,1,4,0]
-#user independent?
+
+# clears 3 - the result of prev check
 seti 0 5 3
+
 bori 3 65536 5
 seti 5557974 2 3
+
 bani 5 255 2
 addr 3 2 3
 bani 3 16777215 3
@@ -28,15 +31,13 @@ muli 3 65899 3
 bani 3 16777215 3
 gtir 256 5 2
 
-#state
-[0, 0, 0, 1526130, 13, 65536]
 
 #B
 #does nothing unless *2 != 0
 #then skip the next one
 addr 2 4 4
-[0, 0, 0, 1526130, 14, 65536]
-#goto 17 - clear 2
+
+#goto 18 - clear 2
 addi 4 1 4
 
 #skipped initially
@@ -61,7 +62,7 @@ gtrr 1 5 1
 addr 1 4 4
 addi 4 1 4
 
-#triggered above: goto 26 - ie setr 2 2 5
+#triggered above: goto 27 - setr 2 2 5
 seti 25 4 4
 
 addi 2 1 2
